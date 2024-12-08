@@ -9,7 +9,7 @@
 
 <script lang="ts">
 	import { templates, stagedTemplate } from '$lib/stores/memeStore';
-	import type { Template } from '$lib/models/template';
+	import type { MemeTemplate } from '$lib/models/meme-template';
 
 	// Handle image uploads and stage the new template
 	const handleFileUpload = (event: Event) => {
@@ -28,7 +28,7 @@
 
 	// Add a new text field to the staged template
 	const addTextField = () => {
-		stagedTemplate.update((template: Template | null) => {
+		stagedTemplate.update((template: MemeTemplate | null) => {
 			if (template) {
 				template.textFields.push({
 					text: '',
@@ -44,10 +44,10 @@
 	};
 
 	// Update a specific text field in the staged template
-	const updateTextField = <K extends keyof Template['textFields'][0]>(
+	const updateTextField = <K extends keyof MemeTemplate['textFields'][0]>(
 		index: number,
 		property: K,
-		value: Template['textFields'][0][K]
+		value: MemeTemplate['textFields'][0][K]
 	) => {
 		stagedTemplate.update((template) => {
 			if (template) {

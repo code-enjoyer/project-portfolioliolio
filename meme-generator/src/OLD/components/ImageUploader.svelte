@@ -1,7 +1,5 @@
 <script lang="ts">
 	import { validateImageFile } from '../utils/fileUtils';
-	import { writable } from 'svelte/store';
-	import type { Writable } from 'svelte/store';
 
 	// Props
 	export let onImageUpload: (file: File) => void;

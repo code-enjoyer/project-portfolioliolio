@@ -1,6 +1,6 @@
 <script lang="ts">
-	import ImageUploader from '$lib/components/ImageUploader.svelte';
-	import TextField from '$lib/components/TextField.svelte';
+	import ImageUploader from './ImageUploader.svelte';
+	import TextField from './TextField.svelte';
 	import { writable } from 'svelte/store';
 	import type { Writable } from 'svelte/store';
 

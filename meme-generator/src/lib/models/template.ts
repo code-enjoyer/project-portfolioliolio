@@ -1,4 +1,4 @@
-interface Template {
+export interface Template {
     image: string;
     textFields: {
         text: string;

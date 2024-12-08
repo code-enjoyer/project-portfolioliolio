@@ -9,7 +9,7 @@
 
 <script lang="ts">
 	import { templates, stagedTemplate } from '$lib/stores/memeStore';
-	import '$lib/components/template';
+	import type { Template } from '$lib/models/template';
 
 	// Handle image uploads and stage the new template
 	const handleFileUpload = (event: Event) => {

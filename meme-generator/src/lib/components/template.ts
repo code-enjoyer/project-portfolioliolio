@@ -6,5 +6,6 @@ interface Template {
         y: number;
         fontSize: number;
         color: string;
+        strokeColor: string
     }[];
 }

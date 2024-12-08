@@ -28,14 +28,15 @@
 
 	// Add a new text field to the staged template
 	const addTextField = () => {
-		stagedTemplate.update((template) => {
+		stagedTemplate.update((template: Template | null) => {
 			if (template) {
 				template.textFields.push({
 					text: '',
 					x: 10,
 					y: template.textFields.length * 40 + 10,
 					fontSize: 24,
-					color: '#ffffff'
+					color: '#ffffff',
+					strokeColor: '#000000'
 				});
 			}
 			return template;
@@ -136,6 +137,9 @@
                   left: {field.x}px;
                   font-size: {field.fontSize}px;
                   color: {field.color};
+				  font-family: Impact, Haettenschweiler;
+				-webkit-text-stroke-width: 1px;
+  				-webkit-text-stroke-color: {field.strokeColor};
                 "
 						>
 							{field.text}
@@ -212,6 +216,13 @@
 								on:input={(e) =>
 									updateTextField(index, 'color', (e.target as HTMLInputElement).value)}
 							/>
+							<input
+							type="color"
+							class="w-10 rounded-md border p-1"
+							bind:value={field.strokeColor}
+							on:input={(e) =>
+								updateTextField(index, 'strokeColor', (e.target as HTMLInputElement).value)}
+						/>
 							<button
 								class="ml-2 rounded-md bg-red-500 px-3 py-1 text-white"
 								on:click={() => removeTextField(index)}

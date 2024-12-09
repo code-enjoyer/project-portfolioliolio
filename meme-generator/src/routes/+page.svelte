@@ -9,7 +9,7 @@
 		const input = event.target as HTMLInputElement;
 		if (input.files && input.files.length > 0) {
 			const reader = new FileReader();
-			reader.onload = (e) => {
+			reader.onload = (e: ProgressEvent<FileReader>) => {
 				const img = new Image();
 				img.onload = () => {
 					stagedTemplate.set({

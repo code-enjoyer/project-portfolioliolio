@@ -77,7 +77,7 @@
 		});
 	};
 
-	// TODO: The text is way off in the generated meme
+	// TODO: #4 The text is way off in the generated meme
 	// Generate the final meme and trigger download
 	const downloadMeme = async () => {
 		const canvas = document.createElement('canvas');
@@ -156,7 +156,7 @@
 			<h2 class="mb-4 mt-6 text-xl font-semibold">Canvas Settings</h2>
 			<div class="mb-4">
 				<p>TODO</p>
-				<!--TODO: add bg colour picker and canvas dims-->
+				<!--TODO: #7 add bg colour picker and canvas dims-->
 			</div>
 
 			{#if $stagedTemplate}
@@ -223,7 +223,7 @@
 					</button>
 					<button on:click={addTextField} class="mt-4 w-1/2 rounded-md bg-teal-500 px-4 py-2 text-white">
 						Add image (TODO)
-						<!--TODO: add support for and swap to adding images-->
+						<!--TODO: #5 add support for and swap to adding images-->
 					</button>
 				</div>
 

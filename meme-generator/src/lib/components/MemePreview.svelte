@@ -13,7 +13,7 @@
     let containerWidth = 0;
     let containerHeight = 0;
 
-	// TODO: Add variable for current scale (and have it dynamically update)
+	// TODO: #6 Add variable for current scale (and have it dynamically update)
 	// The text fields are also slightly off at the moment so need to fix that too :)
 
 	const startDrag = (event: MouseEvent, index: number) => {

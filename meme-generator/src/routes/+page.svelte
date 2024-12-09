@@ -9,11 +9,11 @@
 		const input = event.target as HTMLInputElement;
 		if (input.files && input.files.length > 0) {
 			const reader = new FileReader();
-			reader.onload = (e: ProgressEvent<FileReader>) => {
+			reader.onload = (progressEvent: ProgressEvent<FileReader>) => {
 				const img = new Image();
 				img.onload = () => {
 					stagedTemplate.set({
-						image: e.target?.result as string,
+						image: progressEvent.target?.result as string,
 						width: img.width,
 						height: img.height,
 						textFields: []

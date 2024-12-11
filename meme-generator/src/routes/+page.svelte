@@ -1,26 +1,25 @@
-<!-- <script lang="ts">
-    import MemeEditor from "$lib/components/MemeEditor.svelte";
-</script>
-  
-<div class="container mx-auto p-6">
-    <MemeEditor />
-</div>
-   -->
-
 <script lang="ts">
 	import { templates, stagedTemplate } from '$lib/stores/memeStore';
+	import MemePreview from '$lib/components/MemePreview.svelte';
 	import type { MemeTemplate } from '$lib/models/meme-template';
+	import type { MemeTextField } from '$lib/models/meme-text-field';
 
 	// Handle image uploads and stage the new template
 	const handleFileUpload = (event: Event) => {
 		const input = event.target as HTMLInputElement;
 		if (input.files && input.files.length > 0) {
 			const reader = new FileReader();
-			reader.onload = () => {
-				stagedTemplate.set({
-					image: reader.result as string,
-					textFields: []
-				});
+			reader.onload = (progressEvent: ProgressEvent<FileReader>) => {
+				const img = new Image();
+				img.onload = () => {
+					stagedTemplate.set({
+						image: progressEvent.target?.result as string,
+						width: img.width,
+						height: img.height,
+						textFields: []
+					})
+				};
+				img.src = reader.result as string;
 			};
 			reader.readAsDataURL(input.files[0]);
 		}
@@ -44,10 +43,10 @@
 	};
 
 	// Update a specific text field in the staged template
-	const updateTextField = <K extends keyof MemeTemplate['textFields'][0]>(
+	const updateTextField = <K extends keyof MemeTextField>(
 		index: number,
 		property: K,
-		value: MemeTemplate['textFields'][0][K]
+		value: MemeTextField[K]
 	) => {
 		stagedTemplate.update((template) => {
 			if (template) {
@@ -78,6 +77,7 @@
 		});
 	};
 
+	// TODO: #4 The text is way off in the generated meme
 	// Generate the final meme and trigger download
 	const downloadMeme = async () => {
 		const canvas = document.createElement('canvas');
@@ -123,38 +123,16 @@
 <div class="p-6">
 	<h1 class="mb-6 text-center text-4xl font-bold">Meme Generator 3000</h1>
 
-	<div class="flex flex-col items-center lg:flex-row">
+	<div class="flex flex-col items-top lg:flex-row">
 		<!-- Meme preview -->
-		<div class="w-full rounded-lg border bg-white p-4 shadow-lg lg:w-1/2">
-			{#if $stagedTemplate?.image}
-				<div class="relative">
-					<img src={$stagedTemplate.image} alt="Staged Meme" class="w-full rounded-lg" />
-					{#each $stagedTemplate.textFields as field, index}
-						<div
-							class="absolute"
-							style="
-                  top: {field.y}px;
-                  left: {field.x}px;
-                  font-size: {field.fontSize}px;
-                  color: {field.color};
-				  font-family: Impact, Haettenschweiler;
-				-webkit-text-stroke-width: 1px;
-  				-webkit-text-stroke-color: {field.strokeColor};
-                "
-						>
-							{field.text}
-						</div>
-					{/each}
-				</div>
-			{:else}
-				<p class="text-center text-gray-500">Upload an image to start designing your meme</p>
-			{/if}
+		<div class="mt-6 lg:ml-6 lg:mt-0 lg:w-3/5">
+			<MemePreview/>
 		</div>
 
-		<!-- Control panel -->
-		<div class="mt-6 lg:ml-6 lg:mt-0 lg:w-1/2">
+		<!-- Form -->
+		<div class="mt-6 lg:ml-6 lg:mt-0 lg:w-2/5 overflow-x-hidden">
 			<h2 class="mb-4 text-xl font-semibold">Templates</h2>
-			<div class="flex space-x-4 overflow-x-auto">
+			<div class="flex">
 				<label
 					class="cursor-pointer rounded-md border p-1 shadow ring-purple-500 transition hover:ring"
 				>
@@ -173,6 +151,12 @@
 						/>
 					</button>
 				{/each}
+			</div>
+
+			<h2 class="mb-4 mt-6 text-xl font-semibold">Canvas Settings</h2>
+			<div class="mb-4">
+				<p>TODO</p>
+				<!--TODO: #7 add bg colour picker and canvas dims-->
 			</div>
 
 			{#if $stagedTemplate}
@@ -211,20 +195,20 @@
 							/>
 							<input
 								type="color"
-								class="w-10 rounded-md border p-1"
+								class="w-10 h-auto rounded-md border p-1"
 								bind:value={field.color}
 								on:input={(e) =>
 									updateTextField(index, 'color', (e.target as HTMLInputElement).value)}
 							/>
 							<input
-							type="color"
-							class="w-10 rounded-md border p-1"
-							bind:value={field.strokeColor}
-							on:input={(e) =>
-								updateTextField(index, 'strokeColor', (e.target as HTMLInputElement).value)}
-						/>
+								type="color"
+								class="w-10 h-auto rounded-md border p-1"
+								bind:value={field.strokeColor}
+								on:input={(e) =>
+									updateTextField(index, 'strokeColor', (e.target as HTMLInputElement).value)}
+							/>
 							<button
-								class="ml-2 rounded-md bg-red-500 px-3 py-1 text-white"
+								class="rounded-md bg-red-500 px-3 text-white text-xl"
 								on:click={() => removeTextField(index)}
 							>
 								&#10005;
@@ -233,9 +217,15 @@
 					</div>
 				{/each}
 
-				<button on:click={addTextField} class="mt-4 rounded-md bg-blue-500 px-4 py-2 text-white">
-					Add another text field
-				</button>
+				<div class="flex flex-col lg:flex-row justify-between space-x-3">
+					<button on:click={addTextField} class="mt-4 w-1/2 rounded-md bg-blue-500 px-4 py-2 text-white">
+						Add text
+					</button>
+					<button on:click={addTextField} class="mt-4 w-1/2 rounded-md bg-teal-500 px-4 py-2 text-white">
+						Add image (TODO)
+						<!--TODO: #5 add support for and swap to adding images-->
+					</button>
+				</div>
 
 				<button
 					on:click={downloadMeme}

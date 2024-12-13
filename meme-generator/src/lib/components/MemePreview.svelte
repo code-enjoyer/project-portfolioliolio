@@ -29,7 +29,7 @@
 	const onDrag = (event: MouseEvent) => {
 		if (!isDragging || currentIndex === null || !$stagedTemplate) return;
 
-		const container = document.querySelector('.preview-container')?.getBoundingClientRect();
+		const container = document.querySelector('.preview-image')?.getBoundingClientRect();
 		if (!container) return;
 
 		const dx = event.clientX - startX;
@@ -37,7 +37,6 @@
 
 		const newX = $stagedTemplate.textFields[currentIndex].x + dx;
 		const newY = $stagedTemplate.textFields[currentIndex].y + dy;
-
 		// Ensure the text stays within bounds
 		if (newX >= 0 && newX <= container.width) {
 			$stagedTemplate.textFields[currentIndex].x = newX;
@@ -103,9 +102,7 @@
 	}
 
 	.preview-image {
-		width: 100%;
 		height: 100%;
-		object-fit: contain;
         display: block;
 	}
 

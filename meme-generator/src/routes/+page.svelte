@@ -100,12 +100,13 @@
 
 				// Draw the image on the canvas
 				ctx.drawImage(img, 0, 0, img.width, img.height);
-
 				// Draw each text field
 				template.textFields.forEach((field) => {
-					ctx.font = `${field.fontSize}px sans-serif`;
+					ctx.font = `${field.fontSize}px Impact, Haettenschweiler, sans-serif`;
 					ctx.fillStyle = field.color;
+					ctx.strokeStyle = field.strokeColor;
 					ctx.fillText(field.text, field.x, field.y);
+					ctx.strokeText(field.text, field.x, field.y);
 				});
 
 				resolve();

@@ -98,15 +98,24 @@
 				canvas.width = img.width;
 				canvas.height = img.height;
 
+				const container = document.getElementById('imageContainer');
+				// Calculate scaling factor between preview and original dimensions
+				const scaleX = img.width / (container?.offsetWidth ?? 1);
+				const scaleY = img.height / (container?.offsetHeight ?? 1);
 				// Draw the image on the canvas
 				ctx.drawImage(img, 0, 0, img.width, img.height);
+				ctx.textBaseline = 'top'; // Align text to the top
+				ctx.textAlign = 'left'; // Align text by its starting point
 				// Draw each text field
 				template.textFields.forEach((field) => {
-					ctx.font = `${field.fontSize}px Impact, Haettenschweiler, sans-serif`;
+					const scaledX = Math.round(field.x * scaleX);
+					const scaledY = Math.round(field.y * scaleY);
+					const scaledFontSize = field.fontSize * Math.max(scaleX, scaleY);
+					ctx.font = `${scaledFontSize}px Impact, Haettenschweiler, sans-serif`;
 					ctx.fillStyle = field.color;
 					ctx.strokeStyle = field.strokeColor;
-					ctx.fillText(field.text, field.x, field.y);
-					ctx.strokeText(field.text, field.x, field.y);
+					ctx.fillText(field.text, scaledX, scaledY);
+					ctx.strokeText(field.text, scaledX, scaledY);
 				});
 
 				resolve();

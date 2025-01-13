@@ -9,44 +9,61 @@
 	let startX = 0;
 	let startY = 0;
 
+	// We also need to track the current scale (width )
+	let scaleX = 1;
+	let scaleY = 1;
+
 	let container: HTMLDivElement | null = null;
     let containerWidth = 0;
     let containerHeight = 0;
 
-	// TODO: #6 Add variable for current scale (and have it dynamically update)
 	// The text fields are also slightly off at the moment so need to fix that too :)
 
 	const startDrag = (event: MouseEvent, index: number) => {
 		isDragging = true;
 		currentIndex = index;
 
-		startX = event.clientX;
-		startY = event.clientY;
+	// Adjust for the container's scale
+	const containerRect = container?.getBoundingClientRect();
+	if (containerRect) {
+		scaleX = containerRect.width / (container?.offsetWidth ?? 1);
+		scaleY = containerRect.height / (container?.offsetHeight ?? 1);
+
+		startX = (event.clientX - containerRect.left) / scaleX;
+		startY = (event.clientY - containerRect.top) / scaleY;
+	}
 
 		event.preventDefault();
 	};
 
-	const onDrag = (event: MouseEvent) => {
-		if (!isDragging || currentIndex === null || !$stagedTemplate) return;
+// Called while dragging
+const onDrag = (event: MouseEvent) => {
+	if (!isDragging || currentIndex === null || !$stagedTemplate) return;
 
-		const container = document.querySelector('.preview-image')?.getBoundingClientRect();
-		if (!container) return;
+	const containerRect = container?.getBoundingClientRect();
+	if (!containerRect) return;
 
-		const dx = event.clientX - startX;
-		const dy = event.clientY - startY;
+	// Get current mouse position, scaled to canvas
+	const currentMouseX = (event.clientX - containerRect.left) / scaleX;
+	const currentMouseY = (event.clientY - containerRect.top) / scaleY;
 
-		const newX = $stagedTemplate.textFields[currentIndex].x + dx;
-		const newY = $stagedTemplate.textFields[currentIndex].y + dy;
-		// Ensure the text stays within bounds
-		if (newX >= 0 && newX <= container.width) {
-			$stagedTemplate.textFields[currentIndex].x = newX;
-			startX = event.clientX;
-		}
-		if (newY >= 0 && newY <= container.height) {
-			$stagedTemplate.textFields[currentIndex].y = newY;
-			startY = event.clientY;
-		}
-	};
+	// Calculate delta
+	const dx = currentMouseX - startX;
+	const dy = currentMouseY - startY;
+
+	// Update text field position, ensuring bounds
+	const newX = Math.max(0, Math.min(containerRect.width, $stagedTemplate.textFields[currentIndex].x + dx));
+	const newY = Math.max(0, Math.min(containerRect.height, $stagedTemplate.textFields[currentIndex].y + dy));
+
+	// Apply the updated position
+	$stagedTemplate.textFields[currentIndex].x = newX;
+	$stagedTemplate.textFields[currentIndex].y = newY;
+
+	// Update start coordinates for next movement
+	startX = currentMouseX;
+	startY = currentMouseY;
+};
+
 
 	const stopDrag = () => {
 		isDragging = false;
@@ -55,8 +72,8 @@
 
 	onMount(() => {
         // Register mouse listeners
-		window.addEventListener('mousemove', onDrag);
-        window.addEventListener('mouseup', stopDrag);
+		container?.addEventListener('mousemove', onDrag);
+        container?.addEventListener('mouseup', stopDrag);
 
 		// Get initial container dims
 		if (container) {
@@ -76,8 +93,8 @@
 
         return () => {
 			// Unregister mouse listeners
-            window.removeEventListener('mousemove', onDrag);
-            window.removeEventListener('mouseup', stopDrag);
+            container?.removeEventListener('mousemove', onDrag);
+            container?.removeEventListener('mouseup', stopDrag);
 
 			// Disconnect resize observer
 			resizeObserver.disconnect();
@@ -101,6 +118,10 @@
         align-items: center;
 	}
 
+	.image-container {
+		position: relative;
+	}
+
 	.preview-image {
 		height: 100%;
         display: block;
@@ -118,7 +139,8 @@
     }
 </style>
 
-<div bind:this={container} class="preview-container">
+<div class="preview-container">
+	<div id="imageContainer" bind:this={container} class="image-container">
 	{#if $stagedTemplate?.image}
 		<img src={$stagedTemplate.image} alt="Meme Preview" class="preview-image" />
 		{#each $stagedTemplate.textFields as field, index}
@@ -142,6 +164,7 @@
 			</div>
 		{/each}
     {:else}
-        <p class="preview-container text-center text-gray-500">Upload an image to start designing your meme</p>
+        <p class="text-center text-gray-500">Upload an image to start designing your meme</p>
     {/if}
+</div>
 </div>

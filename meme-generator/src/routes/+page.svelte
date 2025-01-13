@@ -5,7 +5,7 @@
 	import type { MemeTextField } from '$lib/models/meme-text-field';
 
 	let fileName: string = $state('');
-	const fileTypeOptions = $state([
+	const fileTypeOptions = [
 		{
 			id: 0,
 			text: 'PNG',
@@ -16,7 +16,7 @@
 			text: 'JPEG',
 			value: 'image/jpeg'
 		}
-	]);
+	];
 
 	let selectedFileType = $state(fileTypeOptions[0]);
 
@@ -139,9 +139,9 @@
 		});
 
 		// Convert the canvas to a downloadable image
-		const link = document.createElement('a');
+	const link = document.createElement('a');
 		link.download = fileName;
-		link.href = canvas.toDataURL(selectedFileType?.value ?? '');
+		link.href = canvas.toDataURL(selectedFileType.value);
 		link.click();
 	};
 </script>
@@ -200,7 +200,7 @@
 					</div>
 				<h3>File Type</h3>
 				<div class="mb-4">
-					<select value={selectedFileType} class="mb-2 w-full rounded-md border p-2">
+					<select bind:value={selectedFileType} class="mb-2 w-full rounded-md border p-2">
 						{#each fileTypeOptions as fileTypeOption}
 						<option value={fileTypeOption}>
 							{fileTypeOption.text}
@@ -216,7 +216,7 @@
 						<input
 							type="text"
 							class="mb-2 w-full rounded-md border p-2"
-							bind:value={field.text}
+							value={field.text}
 							oninput={(e) => updateTextField(index, 'text', (e.target as HTMLInputElement).value)}
 							placeholder="Enter text"
 						/>
@@ -224,21 +224,21 @@
 							<input
 								type="number"
 								class="w-20 rounded-md border p-2"
-								bind:value={field.x}
+								value={field.x}
 								oninput={(e) => updateTextField(index, 'x', +(e.target as HTMLInputElement).value)}
 								placeholder="X"
 							/>
 							<input
 								type="number"
 								class="w-20 rounded-md border p-2"
-								bind:value={field.y}
+								value={field.y}
 								oninput={(e) => updateTextField(index, 'y', +(e.target as HTMLInputElement).value)}
 								placeholder="Y"
 							/>
 							<input
 								type="number"
 								class="w-20 rounded-md border p-2"
-								bind:value={field.fontSize}
+								value={field.fontSize}
 								oninput={(e) =>
 									updateTextField(index, 'fontSize', +(e.target as HTMLInputElement).value)}
 								placeholder="Font Size"
@@ -246,14 +246,14 @@
 							<input
 								type="color"
 								class="w-10 h-auto rounded-md border p-1"
-								bind:value={field.color}
+								value={field.color}
 								oninput={(e) =>
 									updateTextField(index, 'color', (e.target as HTMLInputElement).value)}
 							/>
 							<input
 								type="color"
 								class="w-10 h-auto rounded-md border p-1"
-								bind:value={field.strokeColor}
+								value={field.strokeColor}
 								oninput={(e) =>
 									updateTextField(index, 'strokeColor', (e.target as HTMLInputElement).value)}
 							/>

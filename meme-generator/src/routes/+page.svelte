@@ -4,6 +4,22 @@
 	import type { MemeTemplate } from '$lib/models/meme-template';
 	import type { MemeTextField } from '$lib/models/meme-text-field';
 
+	let fileName: string = $state('');
+	const fileTypeOptions = $state([
+		{
+			id: 0,
+			text: 'PNG',
+			value: 'image/png'
+		},
+		{
+			id: 1,
+			text: 'JPEG',
+			value: 'image/jpeg'
+		}
+	]);
+
+	let selectedFileType = $state(fileTypeOptions[0]);
+
 	// Handle image uploads and stage the new template
 	const handleFileUpload = (event: Event) => {
 		const input = event.target as HTMLInputElement;
@@ -124,8 +140,8 @@
 
 		// Convert the canvas to a downloadable image
 		const link = document.createElement('a');
-		link.download = 'meme.png';
-		link.href = canvas.toDataURL('image/png');
+		link.download = fileName;
+		link.href = canvas.toDataURL(selectedFileType?.value ?? '');
 		link.click();
 	};
 </script>
@@ -146,12 +162,12 @@
 				<label
 					class="cursor-pointer rounded-md border p-1 shadow ring-purple-500 transition hover:ring"
 				>
-					<input type="file" class="hidden" accept="image/*" on:change={handleFileUpload} />
+					<input type="file" class="hidden" accept="image/*" onchange={handleFileUpload} />
 					<div class="flex h-20 w-20 items-center justify-center rounded-md bg-gray-200">+</div>
 				</label>
 				{#each $templates as template, index}
 					<button
-						on:click={() => stagedTemplate.set(template)}
+						onclick={() => stagedTemplate.set(template)}
 						class="rounded-md border p-1 shadow ring-purple-500 transition hover:ring"
 					>
 						<img
@@ -163,6 +179,8 @@
 				{/each}
 			</div>
 
+
+
 			<h2 class="mb-4 mt-6 text-xl font-semibold">Canvas Settings</h2>
 			<div class="mb-4">
 				<p>TODO</p>
@@ -170,14 +188,36 @@
 			</div>
 
 			{#if $stagedTemplate}
+				<h2 class="mb-4 mt-6 text-xl font-semibold">File Settings</h2>
+				<h3>File Name</h3>
+				<div class="mb-4">
+					<input
+						type="text"
+						class="mb-2 w-full rounded-md border p-2"
+						bind:value={fileName}
+						placeholder="e.g. my-meme-file"
+					/>
+					</div>
+				<h3>File Type</h3>
+				<div class="mb-4">
+					<select value={selectedFileType} class="mb-2 w-full rounded-md border p-2">
+						{#each fileTypeOptions as fileTypeOption}
+						<option value={fileTypeOption}>
+							{fileTypeOption.text}
+						</option>
+						{/each}
+					</select>
+				</div>
+
 				<h2 class="mb-4 mt-6 text-xl font-semibold">Text Fields</h2>
 				{#each $stagedTemplate.textFields as field, index}
+				<h3>Text Field #{index + 1}</h3>
 					<div class="mb-4">
 						<input
 							type="text"
 							class="mb-2 w-full rounded-md border p-2"
 							bind:value={field.text}
-							on:input={(e) => updateTextField(index, 'text', (e.target as HTMLInputElement).value)}
+							oninput={(e) => updateTextField(index, 'text', (e.target as HTMLInputElement).value)}
 							placeholder="Enter text"
 						/>
 						<div class="flex space-x-2">
@@ -185,21 +225,21 @@
 								type="number"
 								class="w-20 rounded-md border p-2"
 								bind:value={field.x}
-								on:input={(e) => updateTextField(index, 'x', +(e.target as HTMLInputElement).value)}
+								oninput={(e) => updateTextField(index, 'x', +(e.target as HTMLInputElement).value)}
 								placeholder="X"
 							/>
 							<input
 								type="number"
 								class="w-20 rounded-md border p-2"
 								bind:value={field.y}
-								on:input={(e) => updateTextField(index, 'y', +(e.target as HTMLInputElement).value)}
+								oninput={(e) => updateTextField(index, 'y', +(e.target as HTMLInputElement).value)}
 								placeholder="Y"
 							/>
 							<input
 								type="number"
 								class="w-20 rounded-md border p-2"
 								bind:value={field.fontSize}
-								on:input={(e) =>
+								oninput={(e) =>
 									updateTextField(index, 'fontSize', +(e.target as HTMLInputElement).value)}
 								placeholder="Font Size"
 							/>
@@ -207,19 +247,19 @@
 								type="color"
 								class="w-10 h-auto rounded-md border p-1"
 								bind:value={field.color}
-								on:input={(e) =>
+								oninput={(e) =>
 									updateTextField(index, 'color', (e.target as HTMLInputElement).value)}
 							/>
 							<input
 								type="color"
 								class="w-10 h-auto rounded-md border p-1"
 								bind:value={field.strokeColor}
-								on:input={(e) =>
+								oninput={(e) =>
 									updateTextField(index, 'strokeColor', (e.target as HTMLInputElement).value)}
 							/>
 							<button
 								class="rounded-md bg-red-500 px-3 text-white text-xl"
-								on:click={() => removeTextField(index)}
+								onclick={() => removeTextField(index)}
 							>
 								&#10005;
 							</button>
@@ -228,24 +268,24 @@
 				{/each}
 
 				<div class="flex flex-col lg:flex-row justify-between space-x-3">
-					<button on:click={addTextField} class="mt-4 w-1/2 rounded-md bg-blue-500 px-4 py-2 text-white">
+					<button onclick={addTextField} class="mt-4 w-1/2 rounded-md bg-blue-500 px-4 py-2 text-white">
 						Add text
 					</button>
-					<button on:click={addTextField} class="mt-4 w-1/2 rounded-md bg-teal-500 px-4 py-2 text-white">
+					<button onclick={addTextField} class="mt-4 w-1/2 rounded-md bg-teal-500 px-4 py-2 text-white">
 						Add image (TODO)
 						<!--TODO: #5 add support for and swap to adding images-->
 					</button>
 				</div>
 
 				<button
-					on:click={downloadMeme}
+					onclick={downloadMeme}
 					class="mt-4 block w-full rounded-md bg-purple-500 px-4 py-2 text-white"
 				>
 					Download Meme
 				</button>
 
 				<button
-					on:click={saveTemplate}
+					onclick={saveTemplate}
 					class="mt-4 block w-full rounded-md bg-green-500 px-4 py-2 text-white"
 				>
 					Save template

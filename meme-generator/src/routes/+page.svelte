@@ -128,6 +128,7 @@
 					const scaledY = Math.round(field.y * scaleY);
 					const scaledFontSize = field.fontSize * Math.max(scaleX, scaleY);
 					ctx.font = `${scaledFontSize}px Impact, Haettenschweiler, sans-serif`;
+					ctx.lineWidth = 1 * Math.max(scaleX, scaleY);
 					ctx.fillStyle = field.color;
 					ctx.strokeStyle = field.strokeColor;
 					ctx.fillText(field.text, scaledX, scaledY);

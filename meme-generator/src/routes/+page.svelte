@@ -156,7 +156,7 @@
 		</div>
 
 		<!-- Form -->
-		<div class="mt-6 lg:ml-6 lg:mt-0 lg:w-2/5 overflow-x-hidden">
+		<div class="mt-6 lg:ml-6 lg:mt-0 lg:w-2/5">
 			<h2 class="mb-4 text-xl font-semibold">Templates</h2>
 			<div class="flex">
 				<label

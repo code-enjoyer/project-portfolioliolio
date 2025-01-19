@@ -32,7 +32,8 @@
 						image: progressEvent.target?.result as string,
 						width: img.width,
 						height: img.height,
-						textFields: []
+						textFields: [],
+						imageFields: []
 					})
 				};
 				img.src = reader.result as string;
@@ -57,6 +58,30 @@
 			return template;
 		});
 	};
+
+	const addImageField = (event: Event) => {
+		const input = event.target as HTMLInputElement;
+		if (input.files && input.files.length > 0) {
+			const reader = new FileReader();
+			reader.onload = (progressEvent: ProgressEvent<FileReader>) => {
+				const img = new Image();
+				img.onload = () => {
+					stagedTemplate.update((template: MemeTemplate | null) => {
+			if (template) {
+				template.imageFields.push({
+					x: 10,
+					y: template.textFields.length * 40 + 10,
+					image: progressEvent.target?.result as string
+				});
+			}
+			return template;
+		})
+				};
+				img.src = reader.result as string;
+			};
+			reader.readAsDataURL(input.files[0]);
+		}
+;	}
 
 	// Update a specific text field in the staged template
 	const updateTextField = <K extends keyof MemeTextField>(
@@ -134,6 +159,16 @@
 					ctx.fillText(field.text, scaledX, scaledY);
 					ctx.strokeText(field.text, scaledX, scaledY);
 				});
+
+				template.imageFields.forEach((image) => {
+					const newImg = new Image();
+					newImg.src = image.image;
+					const scaledX = Math.round(image.x * scaleX);
+					const scaledY = Math.round(image.y * scaleY);
+					const scaledWidth = Math.round( newImg.width * scaleX);
+					const scaledHeight = Math.round(newImg.height* scaleY);
+					ctx.drawImage(newImg, scaledX, scaledY, scaledWidth, scaledHeight)
+				})
 
 				resolve();
 			};
@@ -272,9 +307,10 @@
 					<button onclick={addTextField} class="mt-4 w-1/2 rounded-md bg-blue-500 px-4 py-2 text-white">
 						Add text
 					</button>
-					<button onclick={addTextField} class="mt-4 w-1/2 rounded-md bg-teal-500 px-4 py-2 text-white">
+					<button  class="mt-4 w-1/2 rounded-md bg-teal-500 px-4 py-2 text-white">
+						<input type="file"  accept="image/*" onchange={addImageField} />
 						Add image (TODO)
-						<!--TODO: #5 add support for and swap to adding images-->
+						<!-- TODO: Currently the image upload input is just inside the button, the button should trigger a file upload -->
 					</button>
 				</div>
 

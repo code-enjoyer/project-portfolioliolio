@@ -1,4 +1,6 @@
 <script lang="ts">
+	import type { MemeImageField } from '$lib/models/meme-image-field';
+	import type { MemeTextField } from '$lib/models/meme-text-field';
 	import { stagedTemplate } from '$lib/stores/memeStore';
     import { onMount } from 'svelte';
 
@@ -51,17 +53,40 @@ const onDrag = (event: MouseEvent) => {
 	const dx = currentMouseX - startX;
 	const dy = currentMouseY - startY;
 
-	// Update text field position, ensuring bounds
-	const newX = Math.max(0, Math.min(containerRect.width, $stagedTemplate.textFields[currentIndex].x + dx));
-	const newY = Math.max(0, Math.min(containerRect.height, $stagedTemplate.textFields[currentIndex].y + dy));
+	var currentField;
+
+	const eventTarget = event.target as HTMLElement;
+
+
+	if (eventTarget.classList.contains('text-field')) {
+		 currentField = {...$stagedTemplate.textFields[currentIndex]}
+	}
+	 else  {
+		 currentField = {...$stagedTemplate.imageFields[currentIndex]};
+	 }
+
+	// Update field position, ensuring bounds
+	const newX = Math.max(0, Math.min(containerRect.width, currentField.x + dx));
+	const newY = Math.max(0, Math.min(containerRect.height, currentField.y + dy));
 
 	// Apply the updated position
-	$stagedTemplate.textFields[currentIndex].x = newX;
-	$stagedTemplate.textFields[currentIndex].y = newY;
+	currentField.x = newX;
+	currentField.y = newY;
 
 	// Update start coordinates for next movement
 	startX = currentMouseX;
 	startY = currentMouseY;
+
+	if (eventTarget.classList.contains('text-field')) {
+		$stagedTemplate.textFields = [...$stagedTemplate.textFields.slice(0, currentIndex),
+		currentField as MemeTextField,
+  		...$stagedTemplate.textFields.slice(currentIndex + 1)];
+	}
+	 else  {
+		$stagedTemplate.imageFields = [...$stagedTemplate.imageFields.slice(0, currentIndex),
+		currentField as MemeImageField,
+  		...$stagedTemplate.imageFields.slice(currentIndex + 1)];
+	 }
 };
 
 
@@ -127,7 +152,7 @@ const onDrag = (event: MouseEvent) => {
         display: block;
 	}
 
-	.text-field {
+	.text-field, .image-field {
 		position: absolute;
 		cursor: move;
 		white-space: nowrap;
@@ -163,6 +188,23 @@ const onDrag = (event: MouseEvent) => {
 				{field.text}
 			</div>
 		{/each}
+		{#each $stagedTemplate.imageFields as imageField, index}
+		<div 
+		role="button"
+		tabindex="0"
+		class:text-selected={currentIndex === index}
+		on:mousedown={(e) => startDrag(e, index)}>
+		<img
+			src={imageField.image} 
+			alt="image-${index}"
+			class="image-field"
+			style="
+			top: calc({imageField.y}px);
+			left: calc({imageField.x}px);
+		"
+		/>
+	</div>
+	{/each}
     {:else}
         <p class="text-center text-gray-500">Upload an image to start designing your meme</p>
     {/if}

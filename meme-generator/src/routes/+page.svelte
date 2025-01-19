@@ -3,7 +3,9 @@
 	import MemePreview from '$lib/components/MemePreview.svelte';
 	import type { MemeTemplate } from '$lib/models/meme-template';
 	import type { MemeTextField } from '$lib/models/meme-text-field';
+	import type { MemeImageField } from '$lib/models/meme-image-field';
 
+	let addImageInput: HTMLInputElement;
 	let fileName: string = $state('');
 	const fileTypeOptions = [
 		{
@@ -97,11 +99,35 @@
 		});
 	};
 
+	// Update a specific text field in the staged template
+	const updateImageField = <K extends keyof MemeImageField>(
+		index: number,
+		property: K,
+		value: MemeImageField[K]
+	) => {
+		stagedTemplate.update((template) => {
+			if (template) {
+				template.imageFields[index][property] = value;
+			}
+			return template;
+		});
+	};
+
 	// Remove a text field from the staged template
 	const removeTextField = (index: number) => {
 		stagedTemplate.update((template) => {
 			if (template) {
 				template.textFields.splice(index, 1);
+			}
+			return template;
+		});
+	};
+
+	// Removes image
+	const removeImageField = (index: number) => {
+		stagedTemplate.update((template) => {
+			if (template) {
+				template.imageFields.splice(index, 1);
 			}
 			return template;
 		});
@@ -202,16 +228,16 @@
 					<div class="flex h-20 w-20 items-center justify-center rounded-md bg-gray-200">+</div>
 				</label>
 				{#each $templates as template, index}
-					<button
-						onclick={() => stagedTemplate.set(template)}
-						class="rounded-md border p-1 shadow ring-purple-500 transition hover:ring"
-					>
-						<img
-							src={template.image}
-							alt={`Template ${index}`}
-							class="h-20 w-20 rounded-md object-cover"
-						/>
-					</button>
+				<button
+				onclick={() => stagedTemplate.set(template)}
+				class="rounded-md border p-1 shadow ring-purple-500 transition hover:ring"
+			>
+				<img
+					src={template.image}
+					alt={`Template ${index}`}
+					class="h-20 w-20 rounded-md object-cover"
+				/>
+			</button>
 				{/each}
 			</div>
 
@@ -303,14 +329,51 @@
 					</div>
 				{/each}
 
+				<h2 class="mb-4 mt-6 text-xl font-semibold">Image Fields</h2>
+				{#each $stagedTemplate.imageFields as imageField, index}
+				<h3>Image Field #{index + 1}</h3>
+				<!-- TODO: We should be able to update image resize too -->
+						<div
+						class="rounded-md border p-1 shadow image-field-container"
+					>
+						<img
+							src={imageField.image}
+							alt={`Image ${index}`}
+							class="h-20 w-20 rounded-md object-cover"
+						/>
+
+						</div>
+						<div class="flex space-x-2">
+							<input
+								type="number"
+								class="w-20 rounded-md border p-2"
+								value={imageField.x}
+								oninput={(e) => updateTextField(index, 'x', +(e.target as HTMLInputElement).value)}
+								placeholder="X"
+							/>
+							<input
+								type="number"
+								class="w-20 rounded-md border p-2"
+								value={imageField.y}
+								oninput={(e) => updateTextField(index, 'y', +(e.target as HTMLInputElement).value)}
+								placeholder="Y"
+							/>
+							<button
+							class="rounded-md bg-red-500 px-3 text-white text-xl"
+							onclick={() => removeImageField(index)}
+						>
+							&#10005;
+						</button>
+							</div>
+				{/each}
+
 				<div class="flex flex-col lg:flex-row justify-between space-x-3">
 					<button onclick={addTextField} class="mt-4 w-1/2 rounded-md bg-blue-500 px-4 py-2 text-white">
 						Add text
 					</button>
-					<button  class="mt-4 w-1/2 rounded-md bg-teal-500 px-4 py-2 text-white">
-						<input type="file"  accept="image/*" onchange={addImageField} />
-						Add image (TODO)
-						<!-- TODO: Currently the image upload input is just inside the button, the button should trigger a file upload -->
+					<button class="mt-4 w-1/2 rounded-md bg-teal-500 px-4 py-2 text-white" onclick="{() => addImageInput.click()}">
+						<input type="file" class="hidden"  accept="image/*" onchange={addImageField} bind:this={addImageInput}/>
+						Add image
 					</button>
 				</div>
 
@@ -331,3 +394,19 @@
 		</div>
 	</div>
 </div>
+
+<style>
+	.image-field-container {
+		width: 90px;
+		height: 90px;
+		display: flex;
+    	justify-content: center;
+    	align-items: center;
+	}
+
+	.image-field-preview {
+		max-width: 150px;
+		max-height: 150px;
+		padding: 5px;
+	}
+</style>

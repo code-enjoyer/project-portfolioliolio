@@ -150,8 +150,8 @@ const onDrag = (event: MouseEvent) => {
                 role="button"
                 tabindex="0"
 				style="
-                top: calc({field.y}px * {containerHeight / $stagedTemplate.height});
-                left: calc({field.x}px * {containerHeight / $stagedTemplate.height});
+                top: calc({field.y}px);
+                left: calc({field.x}px);
                 font-size: {field.fontSize}px;
                 color: {field.color};
                 font-family: Impact, Haettenschweiler;

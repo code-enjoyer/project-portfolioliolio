@@ -48,14 +48,15 @@
 	const addTextField = () => {
 		stagedTemplate.update((template: MemeTemplate | null) => {
 			if (template) {
-				template.textFields.push({
+				const newTextField: MemeTextField = {
 					text: '',
 					x: 10,
 					y: template.textFields.length * 40 + 10,
 					fontSize: 24,
 					color: '#ffffff',
 					strokeColor: '#000000'
-				});
+				}
+				template.textFields.push(newTextField);
 			}
 			return template;
 		});
@@ -70,11 +71,12 @@
 				img.onload = () => {
 					stagedTemplate.update((template: MemeTemplate | null) => {
 			if (template) {
-				template.imageFields.push({
+				const newImageField: MemeImageField = {
 					x: 10,
 					y: template.textFields.length * 40 + 10,
 					image: progressEvent.target?.result as string
-				});
+				}
+				template.imageFields.push(newImageField);
 			}
 			return template;
 		})

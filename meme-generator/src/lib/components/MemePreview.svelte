@@ -45,6 +45,9 @@ const onDrag = (event: MouseEvent) => {
 	const containerRect = container?.getBoundingClientRect();
 	if (!containerRect) return;
 
+	const textFieldClass = 'text-field';
+	const imageFieldClass = 'image-field';
+
 	// Get current mouse position, scaled to canvas
 	const currentMouseX = (event.clientX - containerRect.left) / scaleX;
 	const currentMouseY = (event.clientY - containerRect.top) / scaleY;
@@ -58,11 +61,13 @@ const onDrag = (event: MouseEvent) => {
 	const eventTarget = event.target as HTMLElement;
 
 
-	if (eventTarget.classList.contains('text-field')) {
+	if (eventTarget.classList.contains(textFieldClass)) {
 		 currentField = {...$stagedTemplate.textFields[currentIndex]}
 	}
-	 else  {
+	 else if (eventTarget.classList.contains(imageFieldClass)) {
 		 currentField = {...$stagedTemplate.imageFields[currentIndex]};
+	 } else {
+		currentField = {x: 0, y: 0}
 	 }
 
 	// Update field position, ensuring bounds
@@ -77,15 +82,11 @@ const onDrag = (event: MouseEvent) => {
 	startX = currentMouseX;
 	startY = currentMouseY;
 
-	if (eventTarget.classList.contains('text-field')) {
-		$stagedTemplate.textFields = [...$stagedTemplate.textFields.slice(0, currentIndex),
-		currentField as MemeTextField,
-  		...$stagedTemplate.textFields.slice(currentIndex + 1)];
+	if (eventTarget.classList.contains(textFieldClass)) {
+		$stagedTemplate.textFields[currentIndex] = currentField as MemeTextField;
 	}
-	 else  {
-		$stagedTemplate.imageFields = [...$stagedTemplate.imageFields.slice(0, currentIndex),
-		currentField as MemeImageField,
-  		...$stagedTemplate.imageFields.slice(currentIndex + 1)];
+	 else if (eventTarget.classList.contains(imageFieldClass)) {
+		$stagedTemplate.imageFields[currentIndex] = currentField as MemeImageField;
 	 }
 };
 

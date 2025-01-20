@@ -6,5 +6,5 @@ export interface MemeTemplate {
     width: number;
     height: number;
     textFields: MemeTextField[];
-    imageFields: MemeImageField[]
+    imageFields: MemeImageField[];
 }

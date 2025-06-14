@@ -3,6 +3,8 @@
 	import MemePreview from '$lib/components/MemePreview.svelte';
 	import type { MemeTemplate } from '$lib/models/meme-template';
 	import type { MemeTextField } from '$lib/models/meme-text-field';
+	import Header from '$lib/components/Header.svelte';
+	import { HeaderSizeClass } from '$lib/enums/header-size-class';
 
 	// Handle image uploads and stage the new template
 	const handleFileUpload = (event: Event) => {
@@ -121,7 +123,7 @@
 </script>
 
 <div class="p-6">
-	<h1 class="mb-6 text-center text-4xl font-bold">Meme Generator 3000</h1>
+	<Header text="Meme Generator 3000" size={HeaderSizeClass.XL} />
 
 	<div class="flex flex-col items-top lg:flex-row">
 		<!-- Meme preview -->
@@ -131,7 +133,8 @@
 
 		<!-- Form -->
 		<div class="mt-6 lg:ml-6 lg:mt-0 lg:w-2/5 overflow-x-hidden">
-			<h2 class="mb-4 text-xl font-semibold">Templates</h2>
+			<Header text="Templates" size={HeaderSizeClass.M} />
+
 			<div class="flex">
 				<label
 					class="cursor-pointer rounded-md border p-1 shadow ring-purple-500 transition hover:ring"
@@ -153,14 +156,14 @@
 				{/each}
 			</div>
 
-			<h2 class="mb-4 mt-6 text-xl font-semibold">Canvas Settings</h2>
+			<Header text="Canvas Settings" size={HeaderSizeClass.M} />
 			<div class="mb-4">
 				<p>TODO</p>
 				<!--TODO: #7 add bg colour picker and canvas dims-->
 			</div>
 
 			{#if $stagedTemplate}
-				<h2 class="mb-4 mt-6 text-xl font-semibold">Text Fields</h2>
+				<Header text="Text Fields" size={HeaderSizeClass.M} />
 				{#each $stagedTemplate.textFields as field, index}
 					<div class="mb-4">
 						<input

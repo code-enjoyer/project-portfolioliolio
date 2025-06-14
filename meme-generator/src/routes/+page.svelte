@@ -5,6 +5,24 @@
 	import type { MemeTextField } from '$lib/models/meme-text-field';
 	import Header from '$lib/components/Header.svelte';
 	import { HeaderSizeClass } from '$lib/enums/header-size-class';
+	import type { MemeImageField } from '$lib/models/meme-image-field';
+
+	let addImageInput: HTMLInputElement;
+	let fileName: string = $state('');
+	const fileTypeOptions = [
+		{
+			id: 0,
+			text: 'PNG',
+			value: 'image/png'
+		},
+		{
+			id: 1,
+			text: 'JPEG',
+			value: 'image/jpeg'
+		}
+	];
+
+	let selectedFileType = $state(fileTypeOptions[0]);
 
 	// Handle image uploads and stage the new template
 	const handleFileUpload = (event: Event) => {
@@ -18,7 +36,8 @@
 						image: progressEvent.target?.result as string,
 						width: img.width,
 						height: img.height,
-						textFields: []
+						textFields: [],
+						imageFields: []
 					})
 				};
 				img.src = reader.result as string;
@@ -31,18 +50,44 @@
 	const addTextField = () => {
 		stagedTemplate.update((template: MemeTemplate | null) => {
 			if (template) {
-				template.textFields.push({
+				const newTextField: MemeTextField = {
 					text: '',
 					x: 10,
 					y: template.textFields.length * 40 + 10,
 					fontSize: 24,
 					color: '#ffffff',
 					strokeColor: '#000000'
-				});
+				}
+				template.textFields.push(newTextField);
 			}
 			return template;
 		});
 	};
+
+	const addImageField = (event: Event) => {
+		const input = event.target as HTMLInputElement;
+		if (input.files && input.files.length > 0) {
+			const reader = new FileReader();
+			reader.onload = (progressEvent: ProgressEvent<FileReader>) => {
+				const img = new Image();
+				img.onload = () => {
+					stagedTemplate.update((template: MemeTemplate | null) => {
+			if (template) {
+				const newImageField: MemeImageField = {
+					x: 10,
+					y: template.textFields.length * 40 + 10,
+					image: progressEvent.target?.result as string
+				}
+				template.imageFields.push(newImageField);
+			}
+			return template;
+		})
+				};
+				img.src = reader.result as string;
+			};
+			reader.readAsDataURL(input.files[0]);
+		}
+;	}
 
 	// Update a specific text field in the staged template
 	const updateTextField = <K extends keyof MemeTextField>(
@@ -58,11 +103,35 @@
 		});
 	};
 
+	// Update a specific text field in the staged template
+	const updateImageField = <K extends keyof MemeImageField>(
+		index: number,
+		property: K,
+		value: MemeImageField[K]
+	) => {
+		stagedTemplate.update((template) => {
+			if (template) {
+				template.imageFields[index][property] = value;
+			}
+			return template;
+		});
+	};
+
 	// Remove a text field from the staged template
 	const removeTextField = (index: number) => {
 		stagedTemplate.update((template) => {
 			if (template) {
 				template.textFields.splice(index, 1);
+			}
+			return template;
+		});
+	};
+
+	// Removes image
+	const removeImageField = (index: number) => {
+		stagedTemplate.update((template) => {
+			if (template) {
+				template.imageFields.splice(index, 1);
 			}
 			return template;
 		});
@@ -100,24 +169,45 @@
 				canvas.width = img.width;
 				canvas.height = img.height;
 
+				const container = document.getElementById('imageContainer');
+				// Calculate scaling factor between preview and original dimensions
+				const scaleX = img.width / (container?.offsetWidth ?? 1);
+				const scaleY = img.height / (container?.offsetHeight ?? 1);
 				// Draw the image on the canvas
 				ctx.drawImage(img, 0, 0, img.width, img.height);
-
+				ctx.textBaseline = 'top'; // Align text to the top
+				ctx.textAlign = 'left'; // Align text by its starting point
 				// Draw each text field
 				template.textFields.forEach((field) => {
-					ctx.font = `${field.fontSize}px sans-serif`;
+					const scaledX = Math.round(field.x * scaleX);
+					const scaledY = Math.round(field.y * scaleY);
+					const scaledFontSize = field.fontSize * Math.max(scaleX, scaleY);
+					ctx.font = `${scaledFontSize}px Impact, Haettenschweiler, sans-serif`;
+					ctx.lineWidth = 1 * Math.max(scaleX, scaleY);
 					ctx.fillStyle = field.color;
-					ctx.fillText(field.text, field.x, field.y);
+					ctx.strokeStyle = field.strokeColor;
+					ctx.fillText(field.text, scaledX, scaledY);
+					ctx.strokeText(field.text, scaledX, scaledY);
 				});
+
+				template.imageFields.forEach((image) => {
+					const newImg = new Image();
+					newImg.src = image.image;
+					const scaledX = Math.round(image.x * scaleX);
+					const scaledY = Math.round(image.y * scaleY);
+					const scaledWidth = Math.round( newImg.width * scaleX);
+					const scaledHeight = Math.round(newImg.height* scaleY);
+					ctx.drawImage(newImg, scaledX, scaledY, scaledWidth, scaledHeight)
+				})
 
 				resolve();
 			};
 		});
 
 		// Convert the canvas to a downloadable image
-		const link = document.createElement('a');
-		link.download = 'meme.png';
-		link.href = canvas.toDataURL('image/png');
+	const link = document.createElement('a');
+		link.download = fileName;
+		link.href = canvas.toDataURL(selectedFileType.value);
 		link.click();
 	};
 </script>
@@ -132,29 +222,30 @@
 		</div>
 
 		<!-- Form -->
-		<div class="mt-6 lg:ml-6 lg:mt-0 lg:w-2/5 overflow-x-hidden">
+		<div class="mt-6 lg:ml-6 lg:mt-0 lg:w-2/5">
 			<Header text="Templates" size={HeaderSizeClass.M} />
 
 			<div class="flex">
 				<label
 					class="cursor-pointer rounded-md border p-1 shadow ring-purple-500 transition hover:ring"
 				>
-					<input type="file" class="hidden" accept="image/*" on:change={handleFileUpload} />
+					<input type="file" class="hidden" accept="image/*" onchange={handleFileUpload} />
 					<div class="flex h-20 w-20 items-center justify-center rounded-md bg-gray-200">+</div>
 				</label>
 				{#each $templates as template, index}
-					<button
-						on:click={() => stagedTemplate.set(template)}
-						class="rounded-md border p-1 shadow ring-purple-500 transition hover:ring"
-					>
-						<img
-							src={template.image}
-							alt={`Template ${index}`}
-							class="h-20 w-20 rounded-md object-cover"
-						/>
-					</button>
+				<button
+				onclick={() => stagedTemplate.set(template)}
+				class="rounded-md border p-1 shadow ring-purple-500 transition hover:ring"
+			>
+				<img
+					src={template.image}
+					alt={`Template ${index}`}
+					class="h-20 w-20 rounded-md object-cover"
+				/>
+			</button>
 				{/each}
 			</div>
+
 
 			<Header text="Canvas Settings" size={HeaderSizeClass.M} />
 			<div class="mb-4">
@@ -163,56 +254,78 @@
 			</div>
 
 			{#if $stagedTemplate}
-				<Header text="Text Fields" size={HeaderSizeClass.M} />
+				<h2 class="mb-4 mt-6 text-xl font-semibold">File Settings</h2>
+				<h3>File Name</h3>
+				<div class="mb-4">
+					<input
+						type="text"
+						class="mb-2 w-full rounded-md border p-2"
+						bind:value={fileName}
+						placeholder="e.g. my-meme-file"
+					/>
+					</div>
+				<h3>File Type</h3>
+				<div class="mb-4">
+					<select bind:value={selectedFileType} class="mb-2 w-full rounded-md border p-2">
+						{#each fileTypeOptions as fileTypeOption}
+						<option value={fileTypeOption}>
+							{fileTypeOption.text}
+						</option>
+						{/each}
+					</select>
+				</div>
+
+				<h2 class="mb-4 mt-6 text-xl font-semibold">Text Fields</h2>
 				{#each $stagedTemplate.textFields as field, index}
+				<h3>Text Field #{index + 1}</h3>
 					<div class="mb-4">
 						<input
 							type="text"
 							class="mb-2 w-full rounded-md border p-2"
-							bind:value={field.text}
-							on:input={(e) => updateTextField(index, 'text', (e.target as HTMLInputElement).value)}
+							value={field.text}
+							oninput={(e) => updateTextField(index, 'text', (e.target as HTMLInputElement).value)}
 							placeholder="Enter text"
 						/>
 						<div class="flex space-x-2">
 							<input
 								type="number"
 								class="w-20 rounded-md border p-2"
-								bind:value={field.x}
-								on:input={(e) => updateTextField(index, 'x', +(e.target as HTMLInputElement).value)}
+								value={field.x}
+								oninput={(e) => updateTextField(index, 'x', +(e.target as HTMLInputElement).value)}
 								placeholder="X"
 							/>
 							<input
 								type="number"
 								class="w-20 rounded-md border p-2"
-								bind:value={field.y}
-								on:input={(e) => updateTextField(index, 'y', +(e.target as HTMLInputElement).value)}
+								value={field.y}
+								oninput={(e) => updateTextField(index, 'y', +(e.target as HTMLInputElement).value)}
 								placeholder="Y"
 							/>
 							<input
 								type="number"
 								class="w-20 rounded-md border p-2"
-								bind:value={field.fontSize}
-								on:input={(e) =>
+								value={field.fontSize}
+								oninput={(e) =>
 									updateTextField(index, 'fontSize', +(e.target as HTMLInputElement).value)}
 								placeholder="Font Size"
 							/>
 							<input
 								type="color"
 								class="w-10 h-auto rounded-md border p-1"
-								bind:value={field.color}
-								on:input={(e) =>
+								value={field.color}
+								oninput={(e) =>
 									updateTextField(index, 'color', (e.target as HTMLInputElement).value)}
 							/>
 							<input
 								type="color"
 								class="w-10 h-auto rounded-md border p-1"
-								bind:value={field.strokeColor}
-								on:input={(e) =>
+								value={field.strokeColor}
+								oninput={(e) =>
 									updateTextField(index, 'strokeColor', (e.target as HTMLInputElement).value)}
 							/>
 							<button
 								class="rounded-md bg-red-500 px-3 text-white text-xl"
-								on:click={() => removeTextField(index)}
+								onclick={() => removeTextField(index)}
 							>
 								&#10005;
 							</button>
@@ -220,25 +333,63 @@
 					</div>
 				{/each}
 
+				<h2 class="mb-4 mt-6 text-xl font-semibold">Image Fields</h2>
+				{#each $stagedTemplate.imageFields as imageField, index}
+				<h3>Image Field #{index + 1}</h3>
+				<!-- TODO: We should be able to update image resize too -->
+						<div
+						class="rounded-md border p-1 shadow image-field-container"
+					>
+						<img
+							src={imageField.image}
+							alt={`Image ${index}`}
+							class="h-20 w-20 rounded-md object-cover"
+						/>
+
+						</div>
+						<div class="flex space-x-2">
+							<input
+								type="number"
+								class="w-20 rounded-md border p-2"
+								value={imageField.x}
+								oninput={(e) => updateTextField(index, 'x', +(e.target as HTMLInputElement).value)}
+								placeholder="X"
+							/>
+							<input
+								type="number"
+								class="w-20 rounded-md border p-2"
+								value={imageField.y}
+								oninput={(e) => updateTextField(index, 'y', +(e.target as HTMLInputElement).value)}
+								placeholder="Y"
+							/>
+							<button
+							class="rounded-md bg-red-500 px-3 text-white text-xl"
+							onclick={() => removeImageField(index)}
+						>
+							&#10005;
+						</button>
+							</div>
+				{/each}
+
 				<div class="flex flex-col lg:flex-row justify-between space-x-3">
-					<button on:click={addTextField} class="mt-4 w-1/2 rounded-md bg-blue-500 px-4 py-2 text-white">
+					<button onclick={addTextField} class="mt-4 w-1/2 rounded-md bg-blue-500 px-4 py-2 text-white">
 						Add text
 					</button>
-					<button on:click={addTextField} class="mt-4 w-1/2 rounded-md bg-teal-500 px-4 py-2 text-white">
-						Add image (TODO)
-						<!--TODO: #5 add support for and swap to adding images-->
+					<button class="mt-4 w-1/2 rounded-md bg-teal-500 px-4 py-2 text-white" onclick="{() => addImageInput.click()}">
+						<input type="file" class="hidden"  accept="image/*" onchange={addImageField} bind:this={addImageInput}/>
+						Add image
 					</button>
 				</div>
 
 				<button
-					on:click={downloadMeme}
+					onclick={downloadMeme}
 					class="mt-4 block w-full rounded-md bg-purple-500 px-4 py-2 text-white"
 				>
 					Download Meme
 				</button>
 
 				<button
-					on:click={saveTemplate}
+					onclick={saveTemplate}
 					class="mt-4 block w-full rounded-md bg-green-500 px-4 py-2 text-white"
 				>
 					Save template
@@ -247,3 +398,19 @@
 		</div>
 	</div>
 </div>
+
+<style>
+	.image-field-container {
+		width: 90px;
+		height: 90px;
+		display: flex;
+    	justify-content: center;
+    	align-items: center;
+	}
+
+	.image-field-preview {
+		max-width: 150px;
+		max-height: 150px;
+		padding: 5px;
+	}
+</style>

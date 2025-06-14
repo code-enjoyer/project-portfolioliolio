@@ -6,13 +6,10 @@
     "configurations": [
         {
             "name": "Launch via NPM",
-            "type": "node",
+            "type": "chrome",
             "request": "launch",
             "cwd": "${workspaceRoot}",
-            "runtimeExecutable": "npm",
-            "runtimeArgs": [
-                "run", "dev", "--", "--open"
-            ]
+            "runtimeExecutable": "stable",
         }
     ]
 }

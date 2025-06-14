@@ -1,4 +1,6 @@
 <script lang="ts">
+	import type { MemeImageField } from '$lib/models/meme-image-field';
+	import type { MemeTextField } from '$lib/models/meme-text-field';
 	import { stagedTemplate } from '$lib/stores/memeStore';
     import { onMount } from 'svelte';
 
@@ -9,45 +11,85 @@
 	let startX = 0;
 	let startY = 0;
 
+	// We also need to track the current scale (width )
+	let scaleX = 1;
+	let scaleY = 1;
+
 	let container: HTMLDivElement | null = null;
     let containerWidth = 0;
     let containerHeight = 0;
 
-	// TODO: #6 Add variable for current scale (and have it dynamically update)
 	// The text fields are also slightly off at the moment so need to fix that too :)
 
 	const startDrag = (event: MouseEvent, index: number) => {
 		isDragging = true;
 		currentIndex = index;
 
-		startX = event.clientX;
-		startY = event.clientY;
+	// Adjust for the container's scale
+	const containerRect = container?.getBoundingClientRect();
+	if (containerRect) {
+		scaleX = containerRect.width / (container?.offsetWidth ?? 1);
+		scaleY = containerRect.height / (container?.offsetHeight ?? 1);
+
+		startX = (event.clientX - containerRect.left) / scaleX;
+		startY = (event.clientY - containerRect.top) / scaleY;
+	}
 
 		event.preventDefault();
 	};
 
-	const onDrag = (event: MouseEvent) => {
-		if (!isDragging || currentIndex === null || !$stagedTemplate) return;
+// Called while dragging
+const onDrag = (event: MouseEvent) => {
+	if (!isDragging || currentIndex === null || !$stagedTemplate) return;
 
-		const container = document.querySelector('.preview-container')?.getBoundingClientRect();
-		if (!container) return;
+	const containerRect = container?.getBoundingClientRect();
+	if (!containerRect) return;
 
-		const dx = event.clientX - startX;
-		const dy = event.clientY - startY;
+	const textFieldClass = 'text-field';
+	const imageFieldClass = 'image-field';
 
-		const newX = $stagedTemplate.textFields[currentIndex].x + dx;
-		const newY = $stagedTemplate.textFields[currentIndex].y + dy;
+	// Get current mouse position, scaled to canvas
+	const currentMouseX = (event.clientX - containerRect.left) / scaleX;
+	const currentMouseY = (event.clientY - containerRect.top) / scaleY;
 
-		// Ensure the text stays within bounds
-		if (newX >= 0 && newX <= container.width) {
-			$stagedTemplate.textFields[currentIndex].x = newX;
-			startX = event.clientX;
-		}
-		if (newY >= 0 && newY <= container.height) {
-			$stagedTemplate.textFields[currentIndex].y = newY;
-			startY = event.clientY;
-		}
-	};
+	// Calculate delta
+	const dx = currentMouseX - startX;
+	const dy = currentMouseY - startY;
+
+	var currentField;
+
+	const eventTarget = event.target as HTMLElement;
+
+
+	if (eventTarget.classList.contains(textFieldClass)) {
+		 currentField = {...$stagedTemplate.textFields[currentIndex]}
+	}
+	 else if (eventTarget.classList.contains(imageFieldClass)) {
+		 currentField = {...$stagedTemplate.imageFields[currentIndex]};
+	 } else {
+		currentField = {x: 0, y: 0}
+	 }
+
+	// Update field position, ensuring bounds
+	const newX = Math.max(0, Math.min(containerRect.width, currentField.x + dx));
+	const newY = Math.max(0, Math.min(containerRect.height, currentField.y + dy));
+
+	// Apply the updated position
+	currentField.x = newX;
+	currentField.y = newY;
+
+	// Update start coordinates for next movement
+	startX = currentMouseX;
+	startY = currentMouseY;
+
+	if (eventTarget.classList.contains(textFieldClass)) {
+		$stagedTemplate.textFields[currentIndex] = currentField as MemeTextField;
+	}
+	 else if (eventTarget.classList.contains(imageFieldClass)) {
+		$stagedTemplate.imageFields[currentIndex] = currentField as MemeImageField;
+	 }
+};
+
 
 	const stopDrag = () => {
 		isDragging = false;
@@ -56,8 +98,8 @@
 
 	onMount(() => {
         // Register mouse listeners
-		window.addEventListener('mousemove', onDrag);
-        window.addEventListener('mouseup', stopDrag);
+		container?.addEventListener('mousemove', onDrag);
+        container?.addEventListener('mouseup', stopDrag);
 
 		// Get initial container dims
 		if (container) {
@@ -77,8 +119,8 @@
 
         return () => {
 			// Unregister mouse listeners
-            window.removeEventListener('mousemove', onDrag);
-            window.removeEventListener('mouseup', stopDrag);
+            container?.removeEventListener('mousemove', onDrag);
+            container?.removeEventListener('mouseup', stopDrag);
 
 			// Disconnect resize observer
 			resizeObserver.disconnect();
@@ -102,14 +144,16 @@
         align-items: center;
 	}
 
+	.image-container {
+		position: relative;
+	}
+
 	.preview-image {
-		width: 100%;
 		height: 100%;
-		object-fit: contain;
         display: block;
 	}
 
-	.text-field {
+	.text-field, .image-field {
 		position: absolute;
 		cursor: move;
 		white-space: nowrap;
@@ -121,7 +165,8 @@
     }
 </style>
 
-<div bind:this={container} class="preview-container">
+<div class="preview-container">
+	<div id="imageContainer" bind:this={container} class="image-container">
 	{#if $stagedTemplate?.image}
 		<img src={$stagedTemplate.image} alt="Meme Preview" class="preview-image" />
 		{#each $stagedTemplate.textFields as field, index}
@@ -131,8 +176,8 @@
                 role="button"
                 tabindex="0"
 				style="
-                top: calc({field.y}px * {containerHeight / $stagedTemplate.height});
-                left: calc({field.x}px * {containerHeight / $stagedTemplate.height});
+                top: calc({field.y}px);
+                left: calc({field.x}px);
                 font-size: {field.fontSize}px;
                 color: {field.color};
                 font-family: Impact, Haettenschweiler;
@@ -144,7 +189,25 @@
 				{field.text}
 			</div>
 		{/each}
+		{#each $stagedTemplate.imageFields as imageField, index}
+		<div 
+		role="button"
+		tabindex="0"
+		class:text-selected={currentIndex === index}
+		on:mousedown={(e) => startDrag(e, index)}>
+		<img
+			src={imageField.image} 
+			alt="image-${index}"
+			class="image-field"
+			style="
+			top: calc({imageField.y}px);
+			left: calc({imageField.x}px);
+		"
+		/>
+	</div>
+	{/each}
     {:else}
-        <p class="preview-container text-center text-gray-500">Upload an image to start designing your meme</p>
+        <p class="text-center text-gray-500">Upload an image to start designing your meme</p>
     {/if}
+</div>
 </div>

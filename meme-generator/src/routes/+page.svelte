@@ -72,29 +72,31 @@
 				const img = new Image();
 				img.onload = () => {
 					stagedTemplate.update((template: MemeTemplate | null) => {
-			if (template) {
-				const newImageField: MemeImageField = {
-					x: 10,
-					y: template.textFields.length * 40 + 10,
-					image: progressEvent.target?.result as string
-				}
-				template.imageFields.push(newImageField);
-			}
-			return template;
-		})
+						if (template) {
+							const newImageField: MemeImageField = {
+								x: 10,
+								y: template.textFields.length * 40 + 10,
+								image: progressEvent.target?.result as string,
+								width: 10,
+								height: 10,
+								rotation: 0
+							}
+							template.imageFields.push(newImageField);
+						}
+						return template;
+					})
 				};
 				img.src = reader.result as string;
 			};
 			reader.readAsDataURL(input.files[0]);
 		}
-;	}
+	}
 
 	// Update a specific text field in the staged template
 	const updateTextField = <K extends keyof MemeTextField>(
 		index: number,
 		property: K,
-		value: MemeTextField[K]
-	) => {
+		value: MemeTextField[K]) => {
 		stagedTemplate.update((template) => {
 			if (template) {
 				template.textFields[index][property] = value;
@@ -103,12 +105,11 @@
 		});
 	};
 
-	// Update a specific text field in the staged template
+	// Update a specific image field in the staged template
 	const updateImageField = <K extends keyof MemeImageField>(
 		index: number,
 		property: K,
-		value: MemeImageField[K]
-	) => {
+		value: MemeImageField[K]) => {
 		stagedTemplate.update((template) => {
 			if (template) {
 				template.imageFields[index][property] = value;
@@ -170,13 +171,16 @@
 				canvas.height = img.height;
 
 				const container = document.getElementById('imageContainer');
+
 				// Calculate scaling factor between preview and original dimensions
 				const scaleX = img.width / (container?.offsetWidth ?? 1);
 				const scaleY = img.height / (container?.offsetHeight ?? 1);
+				
 				// Draw the image on the canvas
 				ctx.drawImage(img, 0, 0, img.width, img.height);
 				ctx.textBaseline = 'top'; // Align text to the top
 				ctx.textAlign = 'left'; // Align text by its starting point
+
 				// Draw each text field
 				template.textFields.forEach((field) => {
 					const scaledX = Math.round(field.x * scaleX);
@@ -193,9 +197,11 @@
 				template.imageFields.forEach((image) => {
 					const newImg = new Image();
 					newImg.src = image.image;
+					newImg.width = image.width;
+					newImg.height = image.height;
 					const scaledX = Math.round(image.x * scaleX);
 					const scaledY = Math.round(image.y * scaleY);
-					const scaledWidth = Math.round( newImg.width * scaleX);
+					const scaledWidth = Math.round(newImg.width * scaleX);
 					const scaledHeight = Math.round(newImg.height* scaleY);
 					ctx.drawImage(newImg, scaledX, scaledY, scaledWidth, scaledHeight)
 				})
@@ -245,7 +251,6 @@
 			</button>
 				{/each}
 			</div>
-
 
 			<Header text="Canvas Settings" size={HeaderSizeClass.M} />
 			<div class="mb-4">
@@ -352,15 +357,36 @@
 								type="number"
 								class="w-20 rounded-md border p-2"
 								value={imageField.x}
-								oninput={(e) => updateTextField(index, 'x', +(e.target as HTMLInputElement).value)}
+								oninput={(e) => updateImageField(index, 'x', +(e.target as HTMLInputElement).value)}
 								placeholder="X"
 							/>
 							<input
 								type="number"
 								class="w-20 rounded-md border p-2"
 								value={imageField.y}
-								oninput={(e) => updateTextField(index, 'y', +(e.target as HTMLInputElement).value)}
+								oninput={(e) => updateImageField(index, 'y', +(e.target as HTMLInputElement).value)}
 								placeholder="Y"
+							/>
+							<input
+								type="number"
+								class="w-20 rounded-md border p-2"
+								value={imageField.width}
+								oninput={(e) => updateImageField(index, 'width', +(e.target as HTMLInputElement).value)}
+								placeholder="Width"
+							/>
+							<input
+								type="number"
+								class="w-20 rounded-md border p-2"
+								value={imageField.height}
+								oninput={(e) => updateImageField(index, 'height', +(e.target as HTMLInputElement).value)}
+								placeholder="Height"
+							/>
+							<input
+								type="number"
+								class="w-20 rounded-md border p-2"
+								value={imageField.rotation}
+								oninput={(e) => updateImageField(index, 'rotation', +(e.target as HTMLInputElement).value)}
+								placeholder="Rotation"
 							/>
 							<button
 							class="rounded-md bg-red-500 px-3 text-white text-xl"

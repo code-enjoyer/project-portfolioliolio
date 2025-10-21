@@ -25,71 +25,70 @@
 		isDragging = true;
 		currentIndex = index;
 
-	// Adjust for the container's scale
-	const containerRect = container?.getBoundingClientRect();
-	if (containerRect) {
-		scaleX = containerRect.width / (container?.offsetWidth ?? 1);
-		scaleY = containerRect.height / (container?.offsetHeight ?? 1);
+		// Adjust for the container's scale
+		const containerRect = container?.getBoundingClientRect();
+		if (containerRect) {
+			scaleX = containerRect.width / (container?.offsetWidth ?? 1);
+			scaleY = containerRect.height / (container?.offsetHeight ?? 1);
 
-		startX = (event.clientX - containerRect.left) / scaleX;
-		startY = (event.clientY - containerRect.top) / scaleY;
-	}
+			startX = (event.clientX - containerRect.left) / scaleX;
+			startY = (event.clientY - containerRect.top) / scaleY;
+		}
 
 		event.preventDefault();
 	};
 
-// Called while dragging
-const onDrag = (event: MouseEvent) => {
-	if (!isDragging || currentIndex === null || !$stagedTemplate) return;
+	// Called while dragging
+	const onDrag = (event: MouseEvent) => {
+		if (!isDragging || currentIndex === null || !$stagedTemplate) return;
 
-	const containerRect = container?.getBoundingClientRect();
-	if (!containerRect) return;
+		const containerRect = container?.getBoundingClientRect();
+		if (!containerRect) return;
 
-	const textFieldClass = 'text-field';
-	const imageFieldClass = 'image-field';
+		const textFieldClass = 'text-field';
+		const imageFieldClass = 'image-field';
 
-	// Get current mouse position, scaled to canvas
-	const currentMouseX = (event.clientX - containerRect.left) / scaleX;
-	const currentMouseY = (event.clientY - containerRect.top) / scaleY;
+		// Get current mouse position, scaled to canvas
+		const currentMouseX = (event.clientX - containerRect.left) / scaleX;
+		const currentMouseY = (event.clientY - containerRect.top) / scaleY;
 
-	// Calculate delta
-	const dx = currentMouseX - startX;
-	const dy = currentMouseY - startY;
+		// Calculate delta
+		const dx = currentMouseX - startX;
+		const dy = currentMouseY - startY;
 
-	var currentField;
+		var currentField;
 
-	const eventTarget = event.target as HTMLElement;
+		const eventTarget = event.target as HTMLElement;
 
+		if (eventTarget.classList.contains(textFieldClass)) {
+			currentField = {...$stagedTemplate.textFields[currentIndex]}
+		}
+		else if (eventTarget.classList.contains(imageFieldClass)) {
+			currentField = {...$stagedTemplate.imageFields[currentIndex]};
+		}
+		else {
+			currentField = {x: 0, y: 0}
+		}
 
-	if (eventTarget.classList.contains(textFieldClass)) {
-		 currentField = {...$stagedTemplate.textFields[currentIndex]}
-	}
-	 else if (eventTarget.classList.contains(imageFieldClass)) {
-		 currentField = {...$stagedTemplate.imageFields[currentIndex]};
-	 } else {
-		currentField = {x: 0, y: 0}
-	 }
+		// Update field position, ensuring bounds
+		const newX = Math.max(0, Math.min(containerRect.width, currentField.x + dx));
+		const newY = Math.max(0, Math.min(containerRect.height, currentField.y + dy));
 
-	// Update field position, ensuring bounds
-	const newX = Math.max(0, Math.min(containerRect.width, currentField.x + dx));
-	const newY = Math.max(0, Math.min(containerRect.height, currentField.y + dy));
+		// Apply the updated position
+		currentField.x = newX;
+		currentField.y = newY;
 
-	// Apply the updated position
-	currentField.x = newX;
-	currentField.y = newY;
+		// Update start coordinates for next movement
+		startX = currentMouseX;
+		startY = currentMouseY;
 
-	// Update start coordinates for next movement
-	startX = currentMouseX;
-	startY = currentMouseY;
-
-	if (eventTarget.classList.contains(textFieldClass)) {
-		$stagedTemplate.textFields[currentIndex] = currentField as MemeTextField;
-	}
-	 else if (eventTarget.classList.contains(imageFieldClass)) {
-		$stagedTemplate.imageFields[currentIndex] = currentField as MemeImageField;
-	 }
-};
-
+		if (eventTarget.classList.contains(textFieldClass)) {
+			$stagedTemplate.textFields[currentIndex] = currentField as MemeTextField;
+		}
+		else if (eventTarget.classList.contains(imageFieldClass)) {
+			$stagedTemplate.imageFields[currentIndex] = currentField as MemeImageField;
+		}
+	};
 
 	const stopDrag = () => {
 		isDragging = false;
@@ -202,6 +201,8 @@ const onDrag = (event: MouseEvent) => {
 			style="
 			top: calc({imageField.y}px);
 			left: calc({imageField.x}px);
+			width: calc({imageField.width}px);
+			height: calc({imageField.height}px);
 		"
 		/>
 	</div>
